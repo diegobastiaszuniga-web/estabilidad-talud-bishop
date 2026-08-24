@@ -2,7 +2,7 @@
 
 Herramienta de análisis de estabilidad de taludes (mina/relaves) construida desde cero en Python, implementando el método de dovelas de Bishop simplificado con búsqueda de círculo crítico, condición sísmica pseudo-estática, nivel freático explícito, y soporte para dos materiales (ej. relave sobre fundación natural).
 
-**[Ver la app en vivo →](URL_DE_STREAMLIT_CLOUD_AQUI)**
+**[Ver la app en vivo →](https://estabilidad-talud-bishop-33jwofmitv6tbc9i2smmxf.streamlit.app)**
 
 ## Qué hace
 
