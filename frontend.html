@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Estabilidad de Talud — Panel de Cálculo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #14283F;
+    --bg-deep: #0C1B2C;
+    --panel: #1B324C;
+    --ink: #DCEAF5;
+    --ink-dim: #7FA1C0;
+    --grid: #24405F;
+    --accent: #FF6B3D;
+    --ok: #4ADE80;
+    --warn: #FBBF24;
+    --bad: #FB6B6B;
+    --border: #2E4E70;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', sans-serif;
+    min-height: 100vh;
+  }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding: 28px 40px 16px;
+    border-bottom: 2px solid var(--border);
+  }
+
+  .titulo-principal {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 1.9rem;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+  .titulo-principal span { color: var(--accent); }
+
+  .subtitulo {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--ink-dim);
+    margin-top: 4px;
+    letter-spacing: 0.03em;
+  }
+
+  .sello {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--ink-dim);
+    text-align: right;
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+    line-height: 1.6;
+  }
+  .sello b { color: var(--ink); }
+
+  main {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 1px;
+    background: var(--border);
+    margin: 24px 40px 40px;
+    border: 1px solid var(--border);
+  }
+
+  .panel {
+    background: var(--bg-deep);
+    padding: 24px;
+  }
+
+  .seccion-titulo {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .seccion-titulo::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .campo {
+    margin-bottom: 14px;
+  }
+  .campo label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.78rem;
+    color: var(--ink-dim);
+    margin-bottom: 5px;
+  }
+  .campo label .unidad {
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--border);
+  }
+  .campo input {
+    width: 100%;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--ink);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.92rem;
+    padding: 8px 10px;
+    border-radius: 2px;
+  }
+  .campo input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  .fila-doble {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  button#calcular {
+    width: 100%;
+    margin-top: 8px;
+    background: var(--accent);
+    color: var(--bg-deep);
+    border: none;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 12px;
+    border-radius: 2px;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+  }
+  button#calcular:hover { background: #ff8259; }
+  button#calcular:disabled { background: var(--border); color: var(--ink-dim); cursor: wait; }
+
+  .estado-conexion {
+    margin-top: 14px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--ink-dim);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .punto { width: 7px; height: 7px; border-radius: 50%; background: var(--border); }
+  .punto.activo { background: var(--ok); box-shadow: 0 0 6px var(--ok); }
+  .punto.error { background: var(--bad); box-shadow: 0 0 6px var(--bad); }
+
+  .zona-resultado {
+    display: grid;
+    grid-template-columns: 1fr 260px;
+    gap: 24px;
+    padding: 24px;
+  }
+
+  svg#dibujo {
+    background: var(--bg-deep);
+    border: 1px solid var(--border);
+    width: 100%;
+    height: auto;
+  }
+
+  .lectura-fs {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .caja-fs {
+    border: 1px solid var(--border);
+    padding: 20px;
+    text-align: center;
+  }
+  .caja-fs .etiqueta {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    color: var(--ink-dim);
+    text-transform: uppercase;
+  }
+  .caja-fs .valor {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 3rem;
+    margin: 6px 0 4px;
+    transition: color 0.2s;
+  }
+  .caja-fs .clasificacion {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.8rem;
+  }
+
+  .lista-dovelas {
+    border: 1px solid var(--border);
+    padding: 14px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--ink-dim);
+    max-height: 220px;
+    overflow-y: auto;
+  }
+  .lista-dovelas .titulo-mini {
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+    display: block;
+  }
+  .fila-dovela {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    padding: 3px 0;
+    border-bottom: 1px dashed var(--border);
+  }
+
+  .mensaje-error {
+    grid-column: 1 / -1;
+    border: 1px dashed var(--bad);
+    color: var(--bad);
+    padding: 14px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.8rem;
+    display: none;
+  }
+
+  @media (max-width: 800px) {
+    main { grid-template-columns: 1fr; }
+    .zona-resultado { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1 class="titulo-principal">Estabilidad de <span>Talud</span></h1>
+    <div class="subtitulo">METODO DE BISHOP SIMPLIFICADO — ANALISIS DE CIRCULO DE FALLA</div>
+  </div>
+  <div class="sello">
+    PROYECTO: <b>Talud de relaves — ejemplo</b><br>
+    METODO: <b>Bishop simplificado</b><br>
+    FUENTE: <b>API local (FastAPI)</b>
+  </div>
+</header>
+
+<main>
+  <div class="panel">
+    <div class="seccion-titulo">Circulo de falla</div>
+    <div class="fila-doble">
+      <div class="campo">
+        <label>xc <span class="unidad">m</span></label>
+        <input type="number" id="xc" value="72" step="1">
+      </div>
+      <div class="campo">
+        <label>yc <span class="unidad">m</span></label>
+        <input type="number" id="yc" value="66" step="1">
+      </div>
+    </div>
+    <div class="campo">
+      <label>Radio R <span class="unidad">m</span></label>
+      <input type="number" id="R" value="65" step="1">
+    </div>
+
+    <div class="seccion-titulo">Material</div>
+    <div class="campo">
+      <label>Cohesion c' <span class="unidad">kPa</span></label>
+      <input type="number" id="c" value="5.0" step="0.5">
+    </div>
+    <div class="fila-doble">
+      <div class="campo">
+        <label>Friccion &phi;' <span class="unidad">grados</span></label>
+        <input type="number" id="phi_deg" value="30.0" step="0.5">
+      </div>
+      <div class="campo">
+        <label>&gamma; <span class="unidad">kN/m3</span></label>
+        <input type="number" id="gamma" value="18.0" step="0.5">
+      </div>
+    </div>
+
+    <div class="seccion-titulo">Condiciones</div>
+    <div class="fila-doble">
+      <div class="campo">
+        <label>ru <span class="unidad">-</span></label>
+        <input type="number" id="ru" value="0.0" step="0.05" min="0" max="1">
+      </div>
+      <div class="campo">
+        <label>kh (sismo) <span class="unidad">-</span></label>
+        <input type="number" id="kh" value="0.0" step="0.01" min="0" max="0.5">
+      </div>
+    </div>
+
+    <button id="calcular">Calcular FS</button>
+
+    <div class="estado-conexion">
+      <div class="punto" id="punto-estado"></div>
+      <span id="texto-estado">Verificando conexion con la API...</span>
+    </div>
+  </div>
+
+  <div class="zona-resultado">
+    <svg id="dibujo" viewBox="0 0 640 420" preserveAspectRatio="xMidYMid meet"></svg>
+
+    <div class="lectura-fs">
+      <div class="caja-fs">
+        <div class="etiqueta">Factor de Seguridad</div>
+        <div class="valor" id="valor-fs">—</div>
+        <div class="clasificacion" id="clasificacion-fs">Sin calcular</div>
+      </div>
+
+      <div class="lista-dovelas">
+        <span class="titulo-mini">DOVELAS (x_mid / h / &alpha;)</span>
+        <div id="lista-dovelas-contenido">—</div>
+      </div>
+    </div>
+
+    <div class="mensaje-error" id="mensaje-error"></div>
+  </div>
+</main>
+
+<script>
+const API_URL = "http://127.0.0.1:8000";
+
+// Perfil del talud (el mismo que usamos en todo el proyecto de Python)
+const PERFIL = [[0,30],[20,30],[65,0],[100,0]];
+
+const puntoEstado = document.getElementById("punto-estado");
+const textoEstado = document.getElementById("texto-estado");
+
+async function verificarConexion() {
+  try {
+    const r = await fetch(`${API_URL}/health`);
+    if (r.ok) {
+      puntoEstado.className = "punto activo";
+      textoEstado.textContent = "API conectada en " + API_URL;
+    } else {
+      throw new Error("respuesta no OK");
+    }
+  } catch (e) {
+    puntoEstado.className = "punto error";
+    textoEstado.textContent = "No se pudo conectar. ¿Esta corriendo 'uvicorn api:app --reload'?";
+  }
+}
+verificarConexion();
+
+function valor(id) { return parseFloat(document.getElementById(id).value); }
+
+document.getElementById("calcular").addEventListener("click", calcular);
+
+async function calcular() {
+  const boton = document.getElementById("calcular");
+  const mensajeError = document.getElementById("mensaje-error");
+  mensajeError.style.display = "none";
+  boton.disabled = true;
+  boton.textContent = "Calculando...";
+
+  const payload = {
+    perfil: PERFIL,
+    circulo: { xc: valor("xc"), yc: valor("yc"), R: valor("R") },
+    material: { c: valor("c"), phi_deg: valor("phi_deg"), gamma: valor("gamma") },
+    ru: valor("ru"),
+    kh: valor("kh"),
+    n_dovelas: 20
+  };
+
+  try {
+    const r = await fetch(`${API_URL}/calcular-fs`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const datos = await r.json();
+
+    if (!r.ok) {
+      throw new Error(datos.detail || "Error desconocido");
+    }
+
+    mostrarResultado(datos, payload.circulo);
+  } catch (e) {
+    mensajeError.textContent = "Error: " + e.message;
+    mensajeError.style.display = "block";
+    document.getElementById("valor-fs").textContent = "—";
+    document.getElementById("clasificacion-fs").textContent = "Error en el calculo";
+  } finally {
+    boton.disabled = false;
+    boton.textContent = "Calcular FS";
+  }
+}
+
+function colorPorFS(fs) {
+  if (fs >= 1.5) return getComputedStyle(document.documentElement).getPropertyValue('--ok');
+  if (fs >= 1.0) return getComputedStyle(document.documentElement).getPropertyValue('--warn');
+  return getComputedStyle(document.documentElement).getPropertyValue('--bad');
+}
+
+function mostrarResultado(datos, circulo) {
+  const color = colorPorFS(datos.fs);
+  const cajaValor = document.getElementById("valor-fs");
+  cajaValor.textContent = datos.fs.toFixed(3);
+  cajaValor.style.color = color;
+  document.getElementById("clasificacion-fs").textContent = datos.clasificacion;
+
+  const listaEl = document.getElementById("lista-dovelas-contenido");
+  listaEl.innerHTML = datos.dovelas.map(d =>
+    `<div class="fila-dovela"><span>${d.x_mid.toFixed(1)}</span><span>${d.h.toFixed(2)}</span><span>${d.alpha_deg.toFixed(1)}°</span></div>`
+  ).join("");
+
+  dibujarPerfil(circulo, datos.dovelas, color);
+}
+
+function dibujarPerfil(circulo, dovelas, colorCirculo) {
+  const svg = document.getElementById("dibujo");
+  svg.innerHTML = "";
+
+  // Transformacion de coordenadas reales (m, y hacia arriba) a pixeles SVG (y hacia abajo)
+  const xs = PERFIL.map(p => p[0]);
+  const ys = PERFIL.map(p => p[1]);
+  const xMin = Math.min(...xs) - 10, xMax = Math.max(...xs, circulo.xc + circulo.R) + 10;
+  const yMin = -5, yMax = Math.max(...ys, circulo.yc + circulo.R * 0.3) + 10;
+
+  const padding = 30;
+  const w = 640 - padding * 2, h = 420 - padding * 2;
+  const escala = Math.min(w / (xMax - xMin), h / (yMax - yMin));
+
+  function tx(x) { return padding + (x - xMin) * escala; }
+  function ty(y) { return padding + h - (y - yMin) * escala; }
+
+  const ns = "http://www.w3.org/2000/svg";
+  function crear(tag, attrs) {
+    const el = document.createElementNS(ns, tag);
+    for (const k in attrs) el.setAttribute(k, attrs[k]);
+    svg.appendChild(el);
+    return el;
+  }
+
+  // Superficie del talud
+  const puntosPerfil = PERFIL.map(p => `${tx(p[0])},${ty(p[1])}`).join(" ");
+  crear("polyline", { points: puntosPerfil, fill: "none", stroke: "#DCEAF5", "stroke-width": 2 });
+
+  // Circulo de falla (arco)
+  let arco = "";
+  for (let a = 0; a <= 360; a += 2) {
+    const rad = a * Math.PI / 180;
+    const px = circulo.xc + circulo.R * Math.cos(rad);
+    const py = circulo.yc + circulo.R * Math.sin(rad);
+    if (py <= yMax) arco += `${tx(px)},${ty(py)} `;
+  }
+  crear("polyline", { points: arco.trim(), fill: "none", stroke: colorCirculo, "stroke-width": 2, "stroke-dasharray": "6 4" });
+
+  // Centro del circulo
+  crear("circle", { cx: tx(circulo.xc), cy: ty(circulo.yc), r: 3, fill: "#DCEAF5" });
+  crear("text", { x: tx(circulo.xc) + 6, y: ty(circulo.yc) - 6, fill: "#7FA1C0", "font-size": 10, "font-family": "IBM Plex Mono, monospace" }).textContent = "O";
+
+  // Dovelas (lineas verticales tenues)
+  dovelas.forEach(d => {
+    const yTerreno = interpolarTerreno(d.x_mid);
+    const yBase = yTerreno - d.h;
+    crear("line", {
+      x1: tx(d.x_mid), y1: ty(yTerreno), x2: tx(d.x_mid), y2: ty(yBase),
+      stroke: "#3A5A7A", "stroke-width": 1
+    });
+  });
+}
+
+function interpolarTerreno(x) {
+  for (let i = 0; i < PERFIL.length - 1; i++) {
+    const [x1, y1] = PERFIL[i], [x2, y2] = PERFIL[i+1];
+    if (x >= x1 && x <= x2) {
+      const t = (x - x1) / (x2 - x1);
+      return y1 + t * (y2 - y1);
+    }
+  }
+  return PERFIL[PERFIL.length - 1][1];
+}
+</script>
+
+</body>
+</html>
